@@ -66,8 +66,3 @@ void LISTA_BCP_remover(bcpList_t* l, int pid){
 int LISTA_BCP_vazia(bcpList_t* l){
     return (l->tam == 0) ? 1 : 0;
 }
-
-void LIST_BCP_ordenar(bcpList_t* l, int (*comp)(const void*, const void*))
-{
-	qsort(l->data, l->tam, sizeof(l->data), comp);
-}

@@ -18,7 +18,5 @@ void LISTA_BCP_destruir(bcpList_t* l);
 int LISTA_BCP_buscar(bcpList_t* l, int pid);
 void LISTA_BCP_remover(bcpList_t* l, int pid);
 int LISTA_BCP_vazia(bcpList_t* l);
-void LIST_BCP_ordenar(bcpList_t* l, int (*comp)(const void*, const void*));
-void LIST_BCP_inserir_ordenado(bcpList_t* l, int (*comp)(void*, void*));
 
 #endif	/* BCPLIST_H */

@@ -33,7 +33,6 @@ void DUMMY_desbloqueado(struct politica_t* p, bcp_t* processoDesbloqueado){
 }
 
 
-
 /*
  * Round-Robin
  * 
@@ -55,7 +54,7 @@ void RR_tick(struct politica_t *p){
 }
 
 void RR_novoProcesso(struct politica_t *p, bcp_t* novoProcesso){
-	//quando um novo processo chega, ele é inserido na fila round robin
+    //quando um novo processo chega, ele é inserido na fila round robin
     LISTA_BCP_inserir(p->param.rr->fifo, novoProcesso);
 }
 
@@ -103,6 +102,11 @@ void RR_fimProcesso(struct politica_t *p, bcp_t* processo){
     LISTA_BCP_remover(p->param.rr->fifo, processo->pid);
 }
 
+
+/**
+ * Criar uma instância da poĺítica round-robin
+ */
+
 politica_t* POLITICARR_criar(FILE* arqProcessos){
     politica_t* p;
     char* s;
@@ -139,79 +143,9 @@ politica_t* POLITICARR_criar(FILE* arqProcessos){
     
 }
 
-/*
- * Shortest Job First
- * 
- * Os callbacks abaixo implementam a política shortest job first para escalonamento de processos
- * 
- */
-
-void SJF_tick(struct politica_t* p)
-{
-	if(executando)
-	{
-		executando->timeSlice--;
-		if(executando->timeSlice <=0)
-		{
-			LISTA_BCP_inserir(prontos, executando);
-			executando = NULL;
-		}
-	}
-}
-
-void SJF_novoProcesso(struct politica_t* p, bcp_t* novoProcesso)
-{
-	LISTA_BCP_inserir(p->param.sjf->lista, novoProcesso);
-}
-
-bcp_t* SJF_escalonar(struct politica_t* p)
-{
-	bcp_t* ret;
-	int nBloqueados = 0;
-
-	if(p->param.sjf->lista->tam == 0)
-		return NULL;
-
-	while( nBloqueados < p->param.sjf->lista->tam )
-	{
-		//TODO: -ordenar por ordem decrescente
-		// 		-retornar o processo menor
-	}
-}
-
-
-int compPorDuracao( bcp_t *p1, bcp_t *p2 )
-{
-		
-}
-
-void SJF_fimProcesso(struct politica_t* p, bcp_t* processo)
-{
-	return;
-}
-
-politica_t* POLITICASJF_criar(FILE* arqProcessos)
-{
-	return NULL;
-}
-
-/*
- * Fila de Prioridade
- * 
- * Os callbacks abaixo implementam a política fila de prioridade para escalonamento de processos
- * 
- */
-
 politica_t* POLITICAFP_criar(FILE* arqProcessos){
     return NULL;
 }
-
-/*
- * Funcoes genericas
- * 
- * As funcoes abaixo sao responsaveis por gerenciar a criacao das politicas
- * 
- */
 
 politica_t* POLITICA_criar(FILE* arqProcessos){
     char* str;
@@ -225,12 +159,6 @@ politica_t* POLITICA_criar(FILE* arqProcessos){
     politica_t* p;
     p = malloc(sizeof(politica_t));
     
-	//TODO: -criar funcao para criar a politica sjf
-	// 		-criar adicionar novo processo sjf
-	// 		-criar remover processo sjf
-	// 		-criar o scalonar sjf
-	// 			-ordenar por tempo de execucao (quicksort?)
-	// 		-criar a funcao de tick (processamento de um tempo)
     if(!strncmp(str, "sjf", 3)){
         p->param.rr = NULL;
         p->politica = POL_SJF;
