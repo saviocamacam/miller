@@ -20,6 +20,7 @@ typedef struct bcp_t{
     int proxEvento;
     uint64_t tPrimeiraExec;
     uint64_t tUltimaExec;
+    uint64_t tExecRecente;
 }bcp_t;
 
 bcp_t* BCP_criar(FILE* arqProcesso);

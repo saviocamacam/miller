@@ -56,6 +56,8 @@ bcp_t* BCP_criar(FILE* arqProcesso){
     novo->tempoExecutado = 0;
     novo->tPrimeiraExec = -1;
     novo->tUltimaExec = -1;
+	novo->tExecRecente = 0;
+	novo->timeSlice = 0;
     
     return novo;
 }

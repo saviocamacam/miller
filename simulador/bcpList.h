@@ -18,5 +18,6 @@ void LISTA_BCP_destruir(bcpList_t* l);
 int LISTA_BCP_buscar(bcpList_t* l, int pid);
 void LISTA_BCP_remover(bcpList_t* l, int pid);
 int LISTA_BCP_vazia(bcpList_t* l);
+bcp_t* LISTA_BCP_getFist();
 
 #endif	/* BCPLIST_H */

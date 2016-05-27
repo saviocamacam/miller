@@ -66,3 +66,10 @@ void LISTA_BCP_remover(bcpList_t* l, int pid){
 int LISTA_BCP_vazia(bcpList_t* l){
     return (l->tam == 0) ? 1 : 0;
 }
+
+bcp_t* LISTA_BCP_getFist(bcpList_t* l)
+{
+	if(LISTA_BCP_vazia(l))
+		return NULL;
+	return l->data[0];
+}

@@ -11,6 +11,7 @@
 #include "intList.h"
 
 #define SIM_DEBUG 
+#undef SIM_DEBUG
 
 //Estrutura contendo informações sobre o experimento
 experimento_t *experimento = NULL;
@@ -26,6 +27,11 @@ bcpList_t *novos = NULL;
 bcp_t* executando = NULL;
 //Relógio do sistema
 uint64_t relogio;
+
+long double tme = 0.0;
+long double tmr = 0.0;
+long double vazao = 0.0;
+
 
 int main(int argc, char** argv) {
     
@@ -104,10 +110,8 @@ int main(int argc, char** argv) {
         
         //Isto é pra evitar o laço que somente faz relogio++ (compensa!)
         if((bloqueados->tam == 0) && (prontos->tam == 0) && (novos->tam > 0) && (!executando)){
-            if(novos->data[0]->entrada >= 0){
                 tempo_ocioso += novos->data[0]->entrada - relogio;
                 relogio = novos->data[0]->entrada;
-            }
         }
         
         //verificar se algum processo novo chegou neste momento
@@ -127,7 +131,7 @@ int main(int argc, char** argv) {
                 
                 //É um evento de término?
                 if(executando->eventos[executando->proxEvento]->evento == EVT_TERMINO){
-                    printf("O processo PID = %d terminou no tempo %ld!\n", executando->pid, relogio);
+					printf("O processo PID = %d terminou no tempo %lld!\n", executando->pid, relogio);
                     //invocar callback para o final de processo.
                     experimento->politica->fimProcesso(experimento->politica, executando);
                     
@@ -143,7 +147,7 @@ int main(int argc, char** argv) {
                 else{
                     //Se não for evento de término, é um evento de bloqueio
                     executando->proxEvento++;
-                    //O próximo evento é um desbloqueio! 
+                    //O próximo evento é um desbloqueio! Pega o tempo que ficou bloqueado
                     executando->tempoBloqueio = executando->eventos[executando->proxEvento]->tempo + 1;
                     
                     //Apontar para o próximo evento
@@ -187,7 +191,14 @@ int main(int argc, char** argv) {
             if(executando != NULL){
                 trocas_de_contexto++;
                 
-                //Dica: provavelmente aqui é um ponto que é usado para computar o TME deste processo.
+				//contabiliza o tempo de espera desse processo ao TME
+				tme += relogio - executando->tExecRecente;
+				
+				// marca esse tempo de execucao como o mais recente
+				executando->tExecRecente = relogio;
+
+				//DEBUG
+				//printf("DEBUG: tme: \t%llf\t\t relogio: \t%lld\n", tme, relogio);
                 
                 if(executando->tPrimeiraExec == -1){
                     executando->tPrimeiraExec = relogio+1;
@@ -202,14 +213,16 @@ int main(int argc, char** argv) {
         relogio++;
     }
     
-    float TME = 0;
-    float acum = 0;
-    
     //Calcular TME! (ver definição nos slides!)
+	tme =  tme / processos->nProcessos;
     
-    printf("Trocas de Contexto: %ld\n", trocas_de_contexto);
+    printf("Chaveamentos: %ld\n", trocas_de_contexto);
+    printf("TME: %llf\n", tme);
+    printf("TMR: %llf\n", tmr);
+    printf("Vazao: %llf\n", vazao);
     printf("Tempo ocioso: %ld\n", tempo_ocioso);
-    printf("Tempo médio de espera: %.2f\n", TME);
+
+	printf("DEBUG: Relogio: %lli\n", relogio);
     
     return (EXIT_SUCCESS);
 }
