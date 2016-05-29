@@ -265,7 +265,8 @@ int main(int argc, char** argv) {
         //Se não há processo executando...
         if(!executando){
             //Invocar o callback de escalonamento para escolher um processo para ocupar a CPU!
-            executando = experimento->politica->escalonar(experimento->politica);
+			if( !LISTA_BCP_vazia(prontos) )
+				executando = experimento->politica->escalonar(experimento->politica);
             if(executando != NULL){
                 trocas_de_contexto++;
                 

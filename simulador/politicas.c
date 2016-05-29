@@ -171,35 +171,20 @@ bcp_t* FCFS_escalonar(struct politica_t *p){
 	int posMaisAntigo = 0;
     
     //Se não há processos na fila fcfs, retornar nenhum
-    if(p->param.fcfs->fifo->tam == 0)
+    if(p->param.fcfs->fifo->tam == 0 || LISTA_BCP_vazia(prontos))
         return NULL;
-    
-    //testar todos os processos da fila fcfs a partir da posição atual
-    while(nBloqueados < p->param.fcfs->fifo->tam){
-		
-		ret = p->param.fcfs->fifo->data[posMaisAntigo];
-        aux = p->param.fcfs->fifo->data[nBloqueados];
 
-		if(LISTA_BCP_buscar(bloqueados, ret->pid) != LISTA_N_ENCONTRADO){
-			//Se estiver bloqueado, testar o próximo! 
-			nBloqueados++;
-			ret = NULL;
-			continue;
-		} else {
-			// procura o processo mais velho 
-			if( aux->entrada < ret->entrada && LISTA_BCP_buscar(bloqueados, aux->pid) == LISTA_N_ENCONTRADO) {
-				posMaisAntigo = nBloqueados;
-			} else {
-				nBloqueados++;
-			}
-		}
-        
-    }
+	ret = prontos->data[nBloqueados++];
 
-	//FIXME: concertar essa logica maluca
-	//  	ele acaba removendo sem ter ninbguem
-	//  	fila de prontos precisa ser preenchida totalmente antes
-	//retornar o processo para ser executado!
+	// procurar na lista de prontos
+	while( nBloqueados < prontos->tam )
+	{
+		aux = prontos->data[nBloqueados];
+		if( ret->entrada > aux->entrada )
+			ret = aux;
+		nBloqueados++;
+	}
+
 	LISTA_BCP_remover(prontos, ret->pid);
 
     return ret;
