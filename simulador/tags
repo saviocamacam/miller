@@ -1,0 +1,94 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+ARGUMENTOS_INVALIDOS	erros.h	6;"	d
+ARQ_EXPERIMENTO_H	arq_experimento.h	2;"	d
+ARQ_EXP_N_ENCONTRADO	erros.h	4;"	d
+ARQ_PROCESSOS_H	arq_processos.h	2;"	d
+ARQ_PROC_N_ENCONTRADO	erros.h	5;"	d
+BCPLIST_H	bcpList.h	2;"	d
+BCP_H	bcp.h	2;"	d
+ERROS_H	erros.h	2;"	d
+EVENTO	eventos.h	/^typedef enum EVENTO{$/;"	g
+EVENTO	eventos.h	/^}EVENTO;$/;"	t	typeref:enum:EVENTO
+EVENTOS_ALOC_INC	bcp.h	8;"	d
+EVENTOS_H	eventos.h	2;"	d
+EVT_BLOQUEIO	eventos.h	/^    EVT_BLOQUEIO,$/;"	e	enum:EVENTO
+EVT_DESBLOQUEIO	eventos.h	/^    EVT_DESBLOQUEIO,$/;"	e	enum:EVENTO
+EVT_TERMINO	eventos.h	/^    EVT_TERMINO$/;"	e	enum:EVENTO
+LISTA_ALOC_INCREMENTO	bcpList.h	7;"	d
+LISTA_ALOC_INCREMENTO	intList.h	5;"	d
+LISTA_H	intList.h	2;"	d
+LISTA_N_ENCONTRADO	bcpList.h	6;"	d
+LISTA_N_ENCONTRADO	intList.h	4;"	d
+POLITICAS_H	politicas.h	2;"	d
+POLITICA_ESC	politicas.h	/^typedef enum POLITICA_ESC{$/;"	g
+POLITICA_ESC	politicas.h	/^} POLITICA_ESC;$/;"	t	typeref:enum:POLITICA_ESC
+POL_FCFS	politicas.h	/^    POL_FCFS,$/;"	e	enum:POLITICA_ESC
+POL_FP	politicas.h	/^    POL_FP$/;"	e	enum:POLITICA_ESC
+POL_RANDOM	politicas.h	/^    POL_RANDOM,$/;"	e	enum:POLITICA_ESC
+POL_RR	politicas.h	/^    POL_RR,$/;"	e	enum:POLITICA_ESC
+POL_SJF	politicas.h	/^    POL_SJF,$/;"	e	enum:POLITICA_ESC
+aloc	bcpList.h	/^    int aloc;$/;"	m	struct:bcpList_t
+aloc	intList.h	/^    int aloc;$/;"	m	struct:lista_int_t
+alocEventos	bcp.h	/^    int alocEventos;$/;"	m	struct:bcp_t
+arq_processos	arq_experimento.h	/^    char* arq_processos;$/;"	m	struct:experimento_t
+arq_processos_t	arq_processos.h	/^typedef struct arq_processos_t{$/;"	s
+arq_processos_t	arq_processos.h	/^}arq_processos_t;$/;"	t	typeref:struct:arq_processos_t
+arq_saida	arq_experimento.h	/^    char* arq_saida;$/;"	m	struct:experimento_t
+bcpList_t	bcpList.h	/^typedef struct bcpList_t{$/;"	s
+bcpList_t	bcpList.h	/^} bcpList_t;$/;"	t	typeref:struct:bcpList_t
+bcp_t	bcp.h	/^typedef struct bcp_t{$/;"	s
+bcp_t	bcp.h	/^}bcp_t;$/;"	t	typeref:struct:bcp_t
+data	bcpList.h	/^    bcp_t** data;$/;"	m	struct:bcpList_t
+data	intList.h	/^    uint64_t* data;$/;"	m	struct:lista_int_t
+desbloqueado	politicas.h	/^    void (*desbloqueado)(struct politica_t*, bcp_t*);$/;"	m	struct:politica_t
+entrada	bcp.h	/^    uint64_t entrada;$/;"	m	struct:bcp_t
+escalonar	politicas.h	/^    bcp_t* (*escalonar)(struct politica_t*);$/;"	m	struct:politica_t
+evento	eventos.h	/^    EVENTO evento;$/;"	m	struct:evento_t
+evento_t	eventos.h	/^typedef struct evento_t{$/;"	s
+evento_t	eventos.h	/^}evento_t;$/;"	t	typeref:struct:evento_t
+eventos	bcp.h	/^    evento_t** eventos;$/;"	m	struct:bcp_t
+experimento_t	arq_experimento.h	/^typedef struct experimento_t{    $/;"	s
+experimento_t	arq_experimento.h	/^}experimento_t;$/;"	t	typeref:struct:experimento_t
+fifo	politicas.h	/^    bcpList_t* fifo;$/;"	m	struct:rr_t
+filas	politicas.h	/^    politica_t** filas;$/;"	m	struct:fp_t
+fimProcesso	politicas.h	/^    void (*fimProcesso)(struct politica_t*, bcp_t*);$/;"	m	struct:politica_t
+fp	politicas.h	/^        fp_t* fp;$/;"	m	union:politica_t::__anon1
+fp_t	politicas.h	/^typedef struct fp_t fp_t;$/;"	t	typeref:struct:fp_t
+fp_t	politicas.h	/^typedef struct fp_t{$/;"	s
+fp_t	politicas.h	/^}fp_t;$/;"	t	typeref:struct:fp_t
+lista_int_t	intList.h	/^typedef struct lista_int_t{$/;"	s
+lista_int_t	intList.h	/^} lista_int_t;$/;"	t	typeref:struct:lista_int_t
+nEventos	bcp.h	/^    int nEventos;$/;"	m	struct:bcp_t
+nProcessos	arq_processos.h	/^    int nProcessos;$/;"	m	struct:arq_processos_t
+nome_exp	arq_experimento.h	/^    char* nome_exp;$/;"	m	struct:experimento_t
+novoProcesso	politicas.h	/^    void (*novoProcesso)(struct politica_t*, bcp_t*);$/;"	m	struct:politica_t
+param	politicas.h	/^    }param;$/;"	m	struct:politica_t	typeref:union:politica_t::__anon1
+pid	bcp.h	/^    int pid;$/;"	m	struct:bcp_t
+politica	arq_experimento.h	/^    politica_t* politica;$/;"	m	struct:experimento_t
+politica	politicas.h	/^    POLITICA_ESC politica;$/;"	m	struct:politica_t
+politica_t	politicas.h	/^typedef struct politica_t{$/;"	s
+politica_t	politicas.h	/^}politica_t;$/;"	t	typeref:struct:politica_t
+pos	politicas.h	/^    int pos;$/;"	m	struct:rr_t
+prioridade	bcp.h	/^    int prioridade;$/;"	m	struct:bcp_t
+processos	arq_processos.h	/^    bcp_t** processos;$/;"	m	struct:arq_processos_t
+proxEvento	bcp.h	/^    int proxEvento;$/;"	m	struct:bcp_t
+quantum	politicas.h	/^    int quantum;$/;"	m	struct:rr_t
+rr	politicas.h	/^        rr_t* rr;$/;"	m	union:politica_t::__anon1
+rr_t	politicas.h	/^typedef struct rr_t rr_t;$/;"	t	typeref:struct:rr_t
+rr_t	politicas.h	/^typedef struct rr_t{$/;"	s
+rr_t	politicas.h	/^}rr_t;$/;"	t	typeref:struct:rr_t
+tExecRecente	bcp.h	/^    uint64_t tExecRecente;$/;"	m	struct:bcp_t
+tPrimeiraExec	bcp.h	/^    uint64_t tPrimeiraExec;$/;"	m	struct:bcp_t
+tUltimaExec	bcp.h	/^    uint64_t tUltimaExec;$/;"	m	struct:bcp_t
+tam	bcpList.h	/^    int tam;$/;"	m	struct:bcpList_t
+tam	intList.h	/^    int tam;$/;"	m	struct:lista_int_t
+tempo	eventos.h	/^    int tempo;$/;"	m	struct:evento_t
+tempoBloqueio	bcp.h	/^    uint64_t tempoBloqueio;$/;"	m	struct:bcp_t
+tempoExecutado	bcp.h	/^    uint64_t tempoExecutado;$/;"	m	struct:bcp_t
+tick	politicas.h	/^    void (*tick)(struct politica_t*);$/;"	m	struct:politica_t
+timeSlice	bcp.h	/^    uint64_t timeSlice;$/;"	m	struct:bcp_t

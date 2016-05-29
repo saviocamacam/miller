@@ -10,8 +10,13 @@
 #include "bcpList.h"
 #include "intList.h"
 
-#define SIM_DEBUG 
-#undef SIM_DEBUG
+#define DEBUG 
+#undef DEBUG
+
+// define o intervalo de tempo para calculo da vazao
+#define TEMPO_VAZAO 	1000
+#define BUFFER_TERMINO	256
+#define BUFFER_DIAGRAMA_EVT 4096
 
 //Estrutura contendo informações sobre o experimento
 experimento_t *experimento = NULL;
@@ -32,6 +37,14 @@ long double tme = 0.0;
 long double tmr = 0.0;
 long double vazao = 0.0;
 
+uint64_t contadorMediaVazao = 0;
+uint64_t qtdProcExecutados = 0;
+
+char *sequenciaTermino = NULL;
+uint64_t tamStringTermino = 0;
+
+char *diagramaDeEventos = NULL;
+uint64_t tamStringDiagrama = 0;
 
 int main(int argc, char** argv) {
     
@@ -45,7 +58,7 @@ int main(int argc, char** argv) {
     //Ler arquivo de experimento
     experimento = EXPERIMENTO_ler(argv[1]);
     
-#ifdef SIM_DEBUG    
+#ifdef DEBUG    
     EXPERIMENTO_imprimir(experimento);
 #endif
     
@@ -55,7 +68,7 @@ int main(int argc, char** argv) {
     //Ler arquivo de processos
     processos = PROCESSOS_ler(experimento->arq_processos);
     
-#ifdef SIM_DEBUG
+#ifdef DEBUG
     PROCESSOS_imprimir(processos);
 #endif
     
@@ -68,17 +81,25 @@ int main(int argc, char** argv) {
     for(i = 0; i < processos->nProcessos; i++){
         LISTA_BCP_inserir(novos, processos->processos[i]);
     }
+
+	// Aloca espaco para o termino dos processos
+	sequenciaTermino = (char*)malloc(sizeof(char)*BUFFER_TERMINO);
+	tamStringTermino = BUFFER_TERMINO;
+
+	// Aloca espaco para o diagrama de eventos
+	diagramaDeEventos = (char*)malloc(sizeof(char)*BUFFER_DIAGRAMA_EVT);
+	tamStringDiagrama = BUFFER_DIAGRAMA_EVT;
     
     relogio = 0;
     
-#ifdef SIM_DEBUG
+#ifdef DEBUG
     int prontos_ant, bloqueados_ant, novos_ant, executando_ant;
 #endif
     
     uint64_t trocas_de_contexto = 0;
     uint64_t tempo_ocioso = 0;
     
-#ifdef SIM_DEBUG    
+#ifdef DEBUG    
     prontos_ant = bloqueados_ant = novos_ant = 0;
     executando_ant = -1;
 #endif
@@ -89,7 +110,7 @@ int main(int argc, char** argv) {
             || !LISTA_BCP_vazia(novos)
             || executando != NULL){
         
-#ifdef SIM_DEBUG
+#ifdef DEBUG
         if((prontos_ant != prontos->tam) || (bloqueados_ant != bloqueados->tam) || (novos_ant != novos->tam) || ( executando ? executando_ant != executando->pid : executando_ant != -1)){
         
             prontos_ant = prontos->tam;
@@ -131,12 +152,51 @@ int main(int argc, char** argv) {
                 
                 //É um evento de término?
                 if(executando->eventos[executando->proxEvento]->evento == EVT_TERMINO){
-					printf("O processo PID = %d terminou no tempo %lld!\n", executando->pid, relogio);
+
                     //invocar callback para o final de processo.
                     experimento->politica->fimProcesso(experimento->politica, executando);
                     
                     //salvar o momento da última execução
                     executando->tUltimaExec = relogio;
+
+					// contabiliza o tmr desse processo
+					tmr += (executando->tUltimaExec - executando->tPrimeiraExec );
+
+					// incrementa o contador de processos concluidos
+					qtdProcExecutados++;
+
+					// grava o processo terminado
+					char *tmppid = (char*)malloc(sizeof(char)*BUFFER_TERMINO);
+					sprintf( tmppid, "%lld ", executando->pid );
+					if( strlen(sequenciaTermino) + strlen(tmppid) + 1 > tamStringTermino )
+					{
+						sequenciaTermino = realloc( sequenciaTermino, (strlen(sequenciaTermino)+BUFFER_TERMINO+1) * sizeof(char) );
+						if( sequenciaTermino == NULL)
+						{
+							perror("Erro no realloc!");
+						}
+						tamStringTermino += BUFFER_TERMINO;
+					}
+
+					strcat(sequenciaTermino, tmppid);
+					free(tmppid);
+
+					// grava o evento no diagrama de Eventos
+					char *tmpdiagrama = (char*)malloc(sizeof(char)*BUFFER_DIAGRAMA_EVT);
+					sprintf(tmpdiagrama, "%lld\t%lld\tTERMINO\n", relogio, executando->pid);
+					if( strlen(diagramaDeEventos) + strlen(tmpdiagrama) + 1 > tamStringDiagrama )
+					{
+						printf("DEBUG: diagramaeventos: %lld\n", strlen(diagramaDeEventos));
+						diagramaDeEventos = realloc( diagramaDeEventos, (strlen(diagramaDeEventos)+BUFFER_DIAGRAMA_EVT + 4096) * sizeof(char) );
+						if( diagramaDeEventos == NULL)
+						{
+							perror("Erro no realloc!");
+						}
+						tamStringDiagrama += BUFFER_DIAGRAMA_EVT;
+					}
+
+					strcat(diagramaDeEventos, tmpdiagrama);
+					free(tmpdiagrama);
                     
                     //Destruir o BCP do processo.
                     BCP_destruir(executando);
@@ -145,6 +205,8 @@ int main(int argc, char** argv) {
                     executando = NULL;
                 }
                 else{
+					//TODO: implementar novos eventos para o diagrama
+
                     //Se não for evento de término, é um evento de bloqueio
                     executando->proxEvento++;
                     //O próximo evento é um desbloqueio! Pega o tempo que ficou bloqueado
@@ -155,6 +217,22 @@ int main(int argc, char** argv) {
                     
                     //Bloquear processo.
                     LISTA_BCP_inserir(bloqueados, executando);
+
+					// grava o evento no diagrama de Eventos
+					char *tmpdiagrama = (char*)malloc(sizeof(char)*BUFFER_DIAGRAMA_EVT);
+					sprintf(tmpdiagrama, "%lld\t%lld\tBLOQUEIO\n", relogio, executando->pid);
+					if( strlen(diagramaDeEventos) + strlen(tmpdiagrama) + 1 > tamStringDiagrama )
+					{
+						diagramaDeEventos = realloc( diagramaDeEventos, (strlen(diagramaDeEventos)+BUFFER_DIAGRAMA_EVT + 4096) * sizeof(char) );
+						if( diagramaDeEventos == NULL)
+						{
+							perror("Erro no realloc!");
+						}
+						tamStringDiagrama += BUFFER_DIAGRAMA_EVT;
+					}
+
+					strcat(diagramaDeEventos, tmpdiagrama);
+					free(tmpdiagrama);
 
                     //retirar processo de execução
                     executando = NULL;
@@ -209,21 +287,40 @@ int main(int argc, char** argv) {
                 tempo_ocioso++;
             }
         }        
+
+		// contabiliza a vazao a cada 1000 unidades de tempo
+		if( relogio && relogio % TEMPO_VAZAO == 0 )
+		{
+			// soma acumulada da quantidade de processos executados
+			vazao += qtdProcExecutados;
+			qtdProcExecutados = 0;
+			contadorMediaVazao++;
+		}
         
         relogio++;
     }
     
     //Calcular TME! (ver definição nos slides!)
-	tme =  tme / processos->nProcessos;
+	tme = tme / processos->nProcessos;
+	tmr = tmr / processos->nProcessos;
+	vazao = vazao / contadorMediaVazao;
     
-    printf("Chaveamentos: %ld\n", trocas_de_contexto);
+    printf("Chaveamentos: %lld\n", trocas_de_contexto);
     printf("TME: %llf\n", tme);
     printf("TMR: %llf\n", tmr);
     printf("Vazao: %llf\n", vazao);
-    printf("Tempo ocioso: %ld\n", tempo_ocioso);
+    printf("Termino: %s\n", sequenciaTermino);
+    printf("Tempo ocioso: %lld\n", tempo_ocioso);
+	printf("Diagrama de Eventos\n");
+	printf("%s",diagramaDeEventos);
 
+#ifdef DEBUG
 	printf("DEBUG: Relogio: %lli\n", relogio);
+#endif
     
+	// libera a memoria da string de termino dos processos
+	free(sequenciaTermino);
+
     return (EXIT_SUCCESS);
 }
 

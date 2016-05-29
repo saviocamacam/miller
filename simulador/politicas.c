@@ -8,6 +8,9 @@
 extern bcpList_t *bloqueados;
 extern bcpList_t *prontos;
 extern bcp_t* executando;
+extern char *diagramaDeEventos;
+extern uint64_t tamStringDiagrama;
+
 
 /*
  * Funções DUMMY são aquelas que não fazem nada... 
@@ -31,7 +34,6 @@ void DUMMY_fim(struct politica_t *p, bcp_t* processoTerminado){
 void DUMMY_desbloqueado(struct politica_t* p, bcp_t* processoDesbloqueado){
     return;
 }
-
 
 /*
  * Round-Robin
@@ -102,11 +104,6 @@ void RR_fimProcesso(struct politica_t *p, bcp_t* processo){
     LISTA_BCP_remover(p->param.rr->fifo, processo->pid);
 }
 
-
-/**
- * Criar uma instância da poĺítica round-robin
- */
-
 politica_t* POLITICARR_criar(FILE* arqProcessos){
     politica_t* p;
     char* s;
@@ -143,9 +140,102 @@ politica_t* POLITICARR_criar(FILE* arqProcessos){
     
 }
 
+/*
+ * Fila de Prioridade
+ */
+
 politica_t* POLITICAFP_criar(FILE* arqProcessos){
     return NULL;
 }
+
+/*
+ * FCFS (First Came First Served)
+ */
+
+
+void FCFS_novoProcesso(struct politica_t *p, bcp_t* novoProcesso){
+    //quando um novo processo chega, ele é inserido na fila round robin
+    LISTA_BCP_inserir(p->param.fcfs->fifo, novoProcesso);
+}
+
+void FCFS_fimProcesso(struct politica_t *p, bcp_t* processo){
+    //Quando um processo termina, removê-lo da fila round-robin
+    LISTA_BCP_remover(p->param.fcfs->fifo, processo->pid);
+}
+
+bcp_t* FCFS_escalonar(struct politica_t *p){
+    bcp_t* ret;
+    bcp_t* aux;
+
+    int nBloqueados = 0;
+	int posMaisAntigo = 0;
+    
+    //Se não há processos na fila fcfs, retornar nenhum
+    if(p->param.fcfs->fifo->tam == 0)
+        return NULL;
+    
+    //testar todos os processos da fila fcfs a partir da posição atual
+    while(nBloqueados < p->param.fcfs->fifo->tam){
+		
+		ret = p->param.fcfs->fifo->data[posMaisAntigo];
+        aux = p->param.fcfs->fifo->data[nBloqueados];
+
+		if(LISTA_BCP_buscar(bloqueados, ret->pid) != LISTA_N_ENCONTRADO){
+			//Se estiver bloqueado, testar o próximo! 
+			nBloqueados++;
+			ret = NULL;
+			continue;
+		} else {
+			// procura o processo mais velho 
+			if( aux->entrada < ret->entrada && LISTA_BCP_buscar(bloqueados, aux->pid) == LISTA_N_ENCONTRADO) {
+				posMaisAntigo = nBloqueados;
+			} else {
+				nBloqueados++;
+			}
+		}
+        
+    }
+
+	//FIXME: concertar essa logica maluca
+	//  	ele acaba removendo sem ter ninbguem
+	//  	fila de prontos precisa ser preenchida totalmente antes
+	//retornar o processo para ser executado!
+	LISTA_BCP_remover(prontos, ret->pid);
+
+    return ret;
+}
+
+politica_t* POLITICAFCFS_criar(FILE* arqProcessos){
+    politica_t* p;
+    char* s;
+    fcfs_t* fcfs;
+    
+    p = malloc(sizeof(politica_t));
+    
+    p->politica = POL_FCFS;
+    
+    //Ligar os callbacks com as rotinas RR
+    p->escalonar = FCFS_escalonar;
+    p->tick = DUMMY_tick;
+    p->novoProcesso = FCFS_novoProcesso;
+    p->fimProcesso = FCFS_fimProcesso;
+    p->desbloqueado = DUMMY_desbloqueado;
+    
+    //Alocar a struct que contém os parâmetros para a política round-robin
+    fcfs = malloc(sizeof(fcfs_t));
+    
+    //inicializar a estrutura de dados fcfs
+    fcfs->fifo = LISTA_BCP_criar();
+    
+    //Atualizar a política com os parâmetros do escalonador
+    p->param.fcfs = fcfs;
+    
+    return p;
+}
+
+/*
+ * Gerais
+ */
 
 politica_t* POLITICA_criar(FILE* arqProcessos){
     char* str;
@@ -170,13 +260,8 @@ politica_t* POLITICA_criar(FILE* arqProcessos){
     }
     
     if(!strncmp(str, "fcfs", 4)){
-        p->param.rr = NULL;
-        p->politica = POL_FCFS;
-        p->escalonar = NULL;
-        p->tick = DUMMY_tick;
-        p->novoProcesso = DUMMY_novo;
-        p->fimProcesso = DUMMY_fim;
-        p->desbloqueado = DUMMY_desbloqueado;
+		free(p);
+        p = POLITICAFCFS_criar(arqProcessos);
     }
     
     if(!strncmp(str, "random",6)){
