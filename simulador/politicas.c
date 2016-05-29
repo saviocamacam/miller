@@ -168,7 +168,6 @@ bcp_t* FCFS_escalonar(struct politica_t *p){
     bcp_t* aux;
 
     int nBloqueados = 0;
-	int posMaisAntigo = 0;
     
     //Se não há processos na fila fcfs, retornar nenhum
     if(p->param.fcfs->fifo->tam == 0 || LISTA_BCP_vazia(prontos))
@@ -219,6 +218,64 @@ politica_t* POLITICAFCFS_criar(FILE* arqProcessos){
 }
 
 /*
+ * Random
+ */
+
+void RANDOM_novoProcesso(struct politica_t *p, bcp_t* novoProcesso){
+    //quando um novo processo chega, ele é inserido na fila round robin
+    LISTA_BCP_inserir(p->param.random->lista, novoProcesso);
+}
+
+void RANDOM_fimProcesso(struct politica_t *p, bcp_t* processo){
+    //Quando um processo termina, removê-lo da fila round-robin
+    LISTA_BCP_remover(p->param.random->lista, processo->pid);
+}
+
+bcp_t* RANDOM_escalonar(struct politica_t *p){
+
+    //Se não há processos na fila random retornar null
+    if(LISTA_BCP_vazia(prontos))
+        return NULL;
+
+	// calcula o indice de maneira pseudorandomica
+	srand(time(NULL));
+	int index = rand() % prontos->tam;
+
+	bcp_t *ret;
+	ret = prontos->data[index];
+	LISTA_BCP_remover(prontos, ret->pid);
+
+    return ret;
+}
+
+politica_t* POLITICARANDOM_criar(FILE* arqProcessos){
+    politica_t* p;
+    random_t* random;
+    
+    p = malloc(sizeof(politica_t));
+    
+    p->politica = POL_RANDOM;
+    
+    //Ligar os callbacks com as rotinas RR
+    p->escalonar = RANDOM_escalonar;
+    p->tick = DUMMY_tick;
+    p->novoProcesso = RANDOM_novoProcesso;
+    p->fimProcesso = RANDOM_fimProcesso;
+    p->desbloqueado = DUMMY_desbloqueado;
+    
+    //Alocar a struct que contém os parâmetros para a política round-robin
+    random = malloc(sizeof(random_t));
+    
+    //inicializar a estrutura de dados fcfs
+    random->lista = LISTA_BCP_criar();
+    
+    //Atualizar a política com os parâmetros do escalonador
+    p->param.random = random;
+    
+    return p;
+}
+
+/*
  * Gerais
  */
 
@@ -250,13 +307,8 @@ politica_t* POLITICA_criar(FILE* arqProcessos){
     }
     
     if(!strncmp(str, "random",6)){
-        p->param.rr = NULL;
-        p->politica = POL_RANDOM;
-        p->escalonar = NULL;
-        p->tick = DUMMY_tick;
-        p->novoProcesso = DUMMY_novo;
-        p->fimProcesso = DUMMY_fim;
-        p->desbloqueado = DUMMY_desbloqueado;
+		free(p);
+        p = POLITICARANDOM_criar(arqProcessos);
     }
     
     if(!strncmp(str, "rr", 2)){
