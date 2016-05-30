@@ -21,19 +21,19 @@ extern uint64_t tamStringDiagrama;
  * usa-se as rotinas DUMMY para não ter que tratar essas casos no loop de simulação.
 */
 
-void DUMMY_tick(struct politica_t *p){
+static void DUMMY_tick(struct politica_t *p){
     return;
 }
 
-void DUMMY_novo(struct politica_t *p, bcp_t* novoProcesso){
+static void DUMMY_novo(struct politica_t *p, bcp_t* novoProcesso){
     return;
 }
 
-void DUMMY_fim(struct politica_t *p, bcp_t* processoTerminado){
+static void DUMMY_fim(struct politica_t *p, bcp_t* processoTerminado){
     return;
 }
 
-void DUMMY_desbloqueado(struct politica_t* p, bcp_t* processoDesbloqueado){
+static void DUMMY_desbloqueado(struct politica_t* p, bcp_t* processoDesbloqueado){
     return;
 }
 
@@ -121,9 +121,9 @@ politica_t* POLITICARR_criar(FILE* arqProcessos){
     
     //Alocar a struct que contém os parâmetros para a política round-robin
     rr = malloc(sizeof(rr_t));
-    s = malloc(sizeof(char) * 10);
+    s = malloc(sizeof(char) * 20);
     
-    fgets(s, 10, arqProcessos);
+    fgets(s, 20, arqProcessos);
     
     //inicializar a estrutura de dados round-robin
     rr->quantum = atoi(s);
@@ -133,7 +133,7 @@ politica_t* POLITICARR_criar(FILE* arqProcessos){
     //Atualizar a política com os parâmetros do escalonador
     p->param.rr = rr;
     
-    free(s);
+	free(s);
     
     return p;
     
@@ -213,29 +213,62 @@ politica_t* POLITICAFP_criar(FILE* arqProcessos){
     
     //Alocar a struct que contém os parâmetros para a política fp
     fp = malloc(sizeof(fp_t));
+	//FIXME: remover numero magico
+	fp->filas = malloc(sizeof(politica_t*) * 40);
 	fp->tam = 0;
-	
-	/*
-	 * equando não for final do arquivo
-	 * 	 - le a linha
-	 * 	 - verifica qual politica é e seus parametros
-	 * 	 - criar um arquivo temporiario de acordo com a politica
-	 * 	 - chamar a funcao de criar da politica para determinado indice
-	 * 	 - fechar o arquivo temporario
-	 */
 
-    char *linha = malloc((sizeof(char)*BUFFER_LINHA)+1);
+	char *linha = malloc((sizeof(char)*BUFFER_LINHA)+1);
 	while ( !feof(arqProcessos) )
 	{
 		if (fgets(linha, BUFFER_LINHA, arqProcessos) == NULL)
 			break;
 
+		if(!strncmp(linha, "fcfs", 4))
+		{
+			*(fp->filas+fp->tam++) = POLITICAFCFS_criar(NULL);
+		}
+		else if(!strncmp(linha, "sjf", 3))
+		{
+			*(fp->filas+fp->tam++) = POLITICASJF_criar(NULL);
+		}
+		else if(!strncmp(linha, "random",6))
+		{
+			*(fp->filas+fp->tam++) = POLITICARANDOM_criar(NULL);
+		} 
+		else if(!strncmp(linha, "rr", 2))
+		{
+			FILE *tmpfp = tmpfile(); 
+			if( tmpfp == NULL )
+			{
+				perror("Erro na abertura do arquivo!");
+				exit(1);
+			}
+			char *param = strtok((linha+3), ")");
+
+			fprintf(tmpfp, "%s\n", param);
+			rewind(tmpfp);
+
+			*(fp->filas+fp->tam++) = POLITICARR_criar(tmpfp);
+
+			//FIXME: bug com o close
+			if(fclose(tmpfp))
+			{
+				perror("Erro no fechamento do arquivo!");
+				exit(1);
+			}
+			tmpfp = NULL;
+		}
+
 	}
 
-    //Atualizar a política com os parâmetros do escalonador
-    p->param.fp = fp;
-    
-    return p;
+	//FIXME: bug com o free;
+	free(linha);
+	linha = NULL;
+
+	//Atualizar a política com os parâmetros do escalonador
+	p->param.fp = fp;
+
+	return p;
 }
 
 /*
@@ -362,6 +395,14 @@ politica_t* POLITICARANDOM_criar(FILE* arqProcessos){
     p->param.random = random;
     
     return p;
+}
+
+/*
+ * SJF
+ */
+politica_t* POLITICASJF_criar(FILE* arqProcessos)
+{
+	return NULL;
 }
 
 /*

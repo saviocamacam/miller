@@ -182,6 +182,7 @@ int main(int argc, char** argv) {
 
 					strcat(sequenciaTermino, tmppid);
 					free(tmppid);
+					tmppid = NULL;
 
 					// grava o evento no diagrama de Eventos
 					char *tmpdiagrama = (char*)malloc(sizeof(char)*BUFFER_DIAGRAMA_EVT);

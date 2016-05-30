@@ -57,5 +57,34 @@ typedef struct random_t{
 
 politica_t* POLITICA_criar(FILE* arqProcessos);
 void POLITICA_imprimir(politica_t* politica);
+
+static void DUMMY_tick(struct politica_t *p);
+static void DUMMY_novo(struct politica_t *p, bcp_t* novoProcesso);
+static void DUMMY_fim(struct politica_t *p, bcp_t* processoTerminado);
+static void DUMMY_desbloqueado(struct politica_t* p, bcp_t* processoDesbloqueado);
+
+static void RR_tick(struct politica_t *p);
+static void RR_novoProcesso(struct politica_t *p, bcp_t* novoProcesso);
+static bcp_t* RR_escalonar(struct politica_t *p);
+static void RR_fimProcesso(struct politica_t *p, bcp_t* processo);
+static politica_t* POLITICARR_criar(FILE* arqProcessos);
+
+static void FP_novoProcesso(struct politica_t *p, bcp_t* novoProcesso);
+static void FP_fimProcesso(struct politica_t *p, bcp_t* processo);
+static bcp_t* FP_escalonar(struct politica_t *p);
+static politica_t* POLITICAFP_criar(FILE* arqProcessos);
+
+static void FCFS_novoProcesso(struct politica_t *p, bcp_t* novoProcesso);
+static void FCFS_fimProcesso(struct politica_t *p, bcp_t* processo);
+static bcp_t* FCFS_escalonar(struct politica_t *p);
+static politica_t* POLITICAFCFS_criar(FILE* arqProcessos);
+static politica_t* POLITICAFCFS_criar(FILE* arqProcessos);
+
+static void RANDOM_novoProcesso(struct politica_t *p, bcp_t* novoProcesso);
+static void RANDOM_fimProcesso(struct politica_t *p, bcp_t* processo);
+static bcp_t* RANDOM_escalonar(struct politica_t *p);
+static politica_t* POLITICARANDOM_criar(FILE* arqProcessos);
+
+static politica_t* POLITICASJF_criar(FILE* arqProcessos);
 #endif	/* POLITICAS_H */
 
