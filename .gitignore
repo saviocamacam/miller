@@ -4,6 +4,7 @@ bject files
 *.obj
 *.elf
 */*.o
+*/*/*.o
 */*.ko
 */*.obj
 */*.elf
