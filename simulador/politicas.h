@@ -2,6 +2,8 @@
 #define	POLITICAS_H
 
 #include <stdio.h>
+#include <time.h>
+#include <stdlib.h>
 
 #include "bcp.h"
 #include "bcpList.h"
@@ -41,6 +43,7 @@ typedef struct rr_t{
 }rr_t;
 
 typedef struct fp_t{
+	int tam;
     politica_t** filas;
 }fp_t;
 

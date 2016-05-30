@@ -11,6 +11,8 @@ extern bcp_t* executando;
 extern char *diagramaDeEventos;
 extern uint64_t tamStringDiagrama;
 
+#define BUFFER_LINHA 255 
+
 
 /*
  * Funções DUMMY são aquelas que não fazem nada... 
@@ -37,9 +39,6 @@ void DUMMY_desbloqueado(struct politica_t* p, bcp_t* processoDesbloqueado){
 
 /*
  * Round-Robin
- * 
- * Os callbacks abaixo implementam a política round-robin para escalonamento de processos
- * 
  */
 
 void RR_tick(struct politica_t *p){
@@ -144,14 +143,104 @@ politica_t* POLITICARR_criar(FILE* arqProcessos){
  * Fila de Prioridade
  */
 
+void FP_novoProcesso(struct politica_t *p, bcp_t* novoProcesso){
+	int index = novoProcesso->prioridade - 1;
+
+	politica_t *ptmp = p->param.fp->filas[index];
+	ptmp->novoProcesso(ptmp, novoProcesso);
+
+	ptmp = NULL;
+}
+
+void FP_fimProcesso(struct politica_t *p, bcp_t* processo){
+	int index = processo->prioridade - 1;
+
+	politica_t *ptmp = p->param.fp->filas[index];
+	ptmp->fimProcesso(ptmp, processo);
+
+	ptmp = NULL;
+}
+
+bcp_t* FP_escalonar(struct politica_t *p){
+    
+    //Se não há processos na fila fcfs, retornar nenhum
+    if(LISTA_BCP_vazia(prontos))
+        return NULL;
+
+    int nBloqueados = 0;
+    bcp_t* ret = NULL;
+    bcp_t* aux = NULL;
+
+	ret = prontos->data[nBloqueados++];
+
+	// procurar o processo com maior prioridade (menor numero)
+	while( nBloqueados < prontos->tam )
+	{
+		aux = prontos->data[nBloqueados];
+		if( ret->prioridade < aux->prioridade )
+			ret = aux;
+		nBloqueados++;
+	}
+
+	aux = NULL;
+
+	// pegar a politica correspondente daquele processo
+	int index = ret->prioridade - 1;
+	politica_t *ptmp = p->param.fp->filas[index];
+
+	// escalonar a fila de acordo com a politica
+	ret = ptmp->escalonar(ptmp);
+
+	// remover o processo da lista de prontos
+	LISTA_BCP_remover(prontos, ret->pid);
+
+    return ret;
+}
+
 politica_t* POLITICAFP_criar(FILE* arqProcessos){
-    return NULL;
+    politica_t* p;
+    fp_t* fp;
+    
+    p = malloc(sizeof(politica_t));
+    p->politica = POL_FP;
+    
+    //Ligar os callbacks com as rotinas RR
+    p->escalonar = FP_escalonar;
+    p->tick = DUMMY_tick;
+    p->novoProcesso = FP_novoProcesso;
+    p->fimProcesso = FP_fimProcesso;
+    p->desbloqueado = DUMMY_desbloqueado;
+    
+    //Alocar a struct que contém os parâmetros para a política fp
+    fp = malloc(sizeof(fp_t));
+	fp->tam = 0;
+	
+	/*
+	 * equando não for final do arquivo
+	 * 	 - le a linha
+	 * 	 - verifica qual politica é e seus parametros
+	 * 	 - criar um arquivo temporiario de acordo com a politica
+	 * 	 - chamar a funcao de criar da politica para determinado indice
+	 * 	 - fechar o arquivo temporario
+	 */
+
+    char *linha = malloc((sizeof(char)*BUFFER_LINHA)+1);
+	while ( !feof(arqProcessos) )
+	{
+		if (fgets(linha, BUFFER_LINHA, arqProcessos) == NULL)
+			break;
+
+	}
+
+    //Atualizar a política com os parâmetros do escalonador
+    p->param.fp = fp;
+    
+    return p;
 }
 
 /*
- * FCFS (First Came First Served)
+ * FCFS 
  */
-
 
 void FCFS_novoProcesso(struct politica_t *p, bcp_t* novoProcesso){
     //quando um novo processo chega, ele é inserido na fila round robin

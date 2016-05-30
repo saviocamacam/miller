@@ -2,8 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "erros.h"
 #include <stdint.h>
+#include <inttypes.h>
+#include "erros.h"
+
 
 #include "arq_experimento.h"
 #include "arq_processos.h"
@@ -277,7 +279,7 @@ int main(int argc, char** argv) {
 				executando->tExecRecente = relogio;
 
 				//DEBUG
-				//printf("DEBUG: tme: \t%llf\t\t relogio: \t%lld\n", tme, relogio);
+				/*printf("DEBUG: tme: \t%llf\t\t relogio: \t%" PRIu64 "\n", tme, relogio);*/
                 
                 if(executando->tPrimeiraExec == -1){
                     executando->tPrimeiraExec = relogio+1;
@@ -306,17 +308,17 @@ int main(int argc, char** argv) {
 	tmr = tmr / processos->nProcessos;
 	vazao = vazao / contadorMediaVazao;
     
-    printf("Chaveamentos: %lld\n", trocas_de_contexto);
+    printf("Chaveamentos: %llu\n", trocas_de_contexto);
     printf("TME: %llf\n", tme);
     printf("TMR: %llf\n", tmr);
     printf("Vazao: %llf\n", vazao);
     printf("Termino: %s\n", sequenciaTermino);
-    printf("Tempo ocioso: %lld\n", tempo_ocioso);
+    printf("Tempo ocioso: %llu\n", tempo_ocioso);
 	printf("Diagrama de Eventos\n");
 	printf("%s",diagramaDeEventos);
 
 #ifdef DEBUG
-	printf("DEBUG: Relogio: %lli\n", relogio);
+	printf("DEBUG: Relogio: %" PRIu64 "\n", relogio);
 #endif
     
 	// libera a memoria da string de termino dos processos
