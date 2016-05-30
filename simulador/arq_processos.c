@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include <inttypes.h>
 #include "erros.h"
 #include "arq_processos.h"
 #include "bcp.h"
@@ -43,7 +45,7 @@ void PROCESSOS_imprimir(arq_processos_t* proc){
     printf("número de processos: %d\n", proc->nProcessos);
     
     for(i = 0; i < proc->nProcessos; i++){
-        printf("PID: %d Prioridade: %d Entrada: %d nEventos: %d\n",
+        printf("PID: %d Prioridade: %d Entrada: %" PRIu64 "nEventos: %d\n",
                 proc->processos[i]->pid,
                 proc->processos[i]->prioridade,
                 proc->processos[i]->entrada,

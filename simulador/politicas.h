@@ -16,10 +16,24 @@ typedef enum POLITICA_ESC{
     POL_FP
 } POLITICA_ESC;
 
-typedef struct rr_t rr_t;
-typedef struct fp_t fp_t;
-typedef struct fcfs_t fcfs_t;
-typedef struct random_t random_t;
+typedef struct rr_t{
+    int quantum;
+    bcpList_t* fifo;
+    int pos;
+}rr_t;
+
+typedef struct fp_t{
+	int tam;
+    struct politica_t** filas;
+}fp_t;
+
+typedef struct fcfs_t{
+    bcpList_t* fifo;
+}fcfs_t;
+
+typedef struct random_t{
+    bcpList_t* lista;
+}random_t;
 
 typedef struct politica_t{
     POLITICA_ESC politica;
@@ -35,25 +49,6 @@ typedef struct politica_t{
     void (*fimProcesso)(struct politica_t*, bcp_t*);
     void (*desbloqueado)(struct politica_t*, bcp_t*);
 }politica_t;
-
-typedef struct rr_t{
-    int quantum;
-    bcpList_t* fifo;
-    int pos;
-}rr_t;
-
-typedef struct fp_t{
-	int tam;
-    politica_t** filas;
-}fp_t;
-
-typedef struct fcfs_t{
-    bcpList_t* fifo;
-}fcfs_t;
-
-typedef struct random_t{
-    bcpList_t* lista;
-}random_t;
 
 politica_t* POLITICA_criar(FILE* arqProcessos);
 void POLITICA_imprimir(politica_t* politica);

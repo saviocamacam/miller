@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <inttypes.h>
 #include "intList.h"
 
 lista_int_t* LISTA_INT_criar(){
@@ -77,6 +78,6 @@ void LISTA_INT_imprimir(lista_int_t* l){
     int i;
     
     for(i = 0; i <l->tam; i++){
-        printf("%d : %d\n", i, l->data[i]);
+        printf("%d : %" PRIu64 "\n", i, l->data[i]);
     }
 }

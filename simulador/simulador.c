@@ -169,7 +169,7 @@ int main(int argc, char** argv) {
 
 					// grava o processo terminado
 					char *tmppid = (char*)malloc(sizeof(char)*BUFFER_TERMINO);
-					sprintf( tmppid, "%lld ", executando->pid );
+					sprintf( tmppid, "%d ", executando->pid );
 					if( strlen(sequenciaTermino) + strlen(tmppid) + 1 > tamStringTermino )
 					{
 						sequenciaTermino = realloc( sequenciaTermino, (strlen(sequenciaTermino)+BUFFER_TERMINO+1) * sizeof(char) );
@@ -186,10 +186,10 @@ int main(int argc, char** argv) {
 
 					// grava o evento no diagrama de Eventos
 					char *tmpdiagrama = (char*)malloc(sizeof(char)*BUFFER_DIAGRAMA_EVT);
-					sprintf(tmpdiagrama, "%lld\t%lld\tTERMINO\n", relogio, executando->pid);
+					sprintf(tmpdiagrama, "%" PRIu64 "\t%d\tTERMINO\n", relogio, executando->pid);
 					if( strlen(diagramaDeEventos) + strlen(tmpdiagrama) + 1 > tamStringDiagrama )
 					{
-						printf("DEBUG: diagramaeventos: %lld\n", strlen(diagramaDeEventos));
+						printf("DEBUG: diagramaeventos: %u\n", strlen(diagramaDeEventos));
 						diagramaDeEventos = realloc( diagramaDeEventos, (strlen(diagramaDeEventos)+BUFFER_DIAGRAMA_EVT + 4096) * sizeof(char) );
 						if( diagramaDeEventos == NULL)
 						{
@@ -223,7 +223,7 @@ int main(int argc, char** argv) {
 
 					// grava o evento no diagrama de Eventos
 					char *tmpdiagrama = (char*)malloc(sizeof(char)*BUFFER_DIAGRAMA_EVT);
-					sprintf(tmpdiagrama, "%lld\t%lld\tBLOQUEIO\n", relogio, executando->pid);
+					sprintf(tmpdiagrama, "%" PRIu64 "\t%d\tBLOQUEIO\n", relogio, executando->pid);
 					if( strlen(diagramaDeEventos) + strlen(tmpdiagrama) + 1 > tamStringDiagrama )
 					{
 						diagramaDeEventos = realloc( diagramaDeEventos, (strlen(diagramaDeEventos)+BUFFER_DIAGRAMA_EVT + 4096) * sizeof(char) );
@@ -309,12 +309,12 @@ int main(int argc, char** argv) {
 	tmr = tmr / processos->nProcessos;
 	vazao = vazao / contadorMediaVazao;
     
-    printf("Chaveamentos: %llu\n", trocas_de_contexto);
-    printf("TME: %llf\n", tme);
-    printf("TMR: %llf\n", tmr);
-    printf("Vazao: %llf\n", vazao);
+    printf("Chaveamentos: %" PRIu64 "\n", trocas_de_contexto);
+    printf("TME: %Lf\n", tme);
+    printf("TMR: %Lf\n", tmr);
+    printf("Vazao: %Lf\n", vazao);
     printf("Termino: %s\n", sequenciaTermino);
-    printf("Tempo ocioso: %llu\n", tempo_ocioso);
+    printf("Tempo ocioso: %" PRIu64 "\n", tempo_ocioso);
 	printf("Diagrama de Eventos\n");
 	printf("%s",diagramaDeEventos);
 
