@@ -324,6 +324,7 @@ int main(int argc, char** argv) {
     
 	// libera a memoria da string de termino dos processos
 	free(sequenciaTermino);
+	free(diagramaDeEventos);
 
     return (EXIT_SUCCESS);
 }
