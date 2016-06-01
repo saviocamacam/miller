@@ -60,19 +60,11 @@ int main(int argc, char** argv) {
     //Ler arquivo de experimento
     experimento = EXPERIMENTO_ler(argv[1]);
     
-#ifdef DEBUG    
-    EXPERIMENTO_imprimir(experimento);
-#endif
-    
     //Tirar \n do nome do arquivo de processos
     *(strstr(experimento->arq_processos, "\n")) = '\0';
     
     //Ler arquivo de processos
     processos = PROCESSOS_ler(experimento->arq_processos);
-    
-#ifdef DEBUG
-    PROCESSOS_imprimir(processos);
-#endif
     
     //Criar as filas de processos
     prontos = LISTA_BCP_criar();
@@ -88,49 +80,21 @@ int main(int argc, char** argv) {
 	sequenciaTermino = (char*)malloc(sizeof(char)*BUFFER_TERMINO);
 	tamStringTermino = BUFFER_TERMINO;
 
-	// Aloca espaco para o diagrama de eventos
 	diagramaDeEventos = (char*)malloc(sizeof(char)*BUFFER_DIAGRAMA_EVT);
 	tamStringDiagrama = BUFFER_DIAGRAMA_EVT;
     
     relogio = 0;
     
-#ifdef DEBUG
-    int prontos_ant, bloqueados_ant, novos_ant, executando_ant;
-#endif
-    
     uint64_t trocas_de_contexto = 0;
     uint64_t tempo_ocioso = 0;
     
-#ifdef DEBUG    
-    prontos_ant = bloqueados_ant = novos_ant = 0;
-    executando_ant = -1;
-#endif
     
     //Executar a simulação enquanto as listas não são vazias ou há pelo menos um processo executando
     while(!LISTA_BCP_vazia(prontos) 
             || !LISTA_BCP_vazia(bloqueados) 
             || !LISTA_BCP_vazia(novos)
             || executando != NULL){
-        
-#ifdef DEBUG
-        if((prontos_ant != prontos->tam) || (bloqueados_ant != bloqueados->tam) || (novos_ant != novos->tam) || ( executando ? executando_ant != executando->pid : executando_ant != -1)){
-        
-            prontos_ant = prontos->tam;
-            bloqueados_ant = bloqueados->tam;
-            novos_ant = novos->tam;
-            executando_ant = executando ? executando->pid : -1;
-            
-            printf("%ld: prontos: %d, bloqueados: %d, novos: %d, executando = %d\n", relogio, prontos->tam, bloqueados->tam, novos->tam, executando ? executando->pid : -1);
-            
-            //if porquinho.. mas como é pra debug tem desculpa :)
-            if(experimento->politica->politica == POL_RR){
-                printf("tamfifo: %d\n", experimento->politica->param.rr->fifo->tam);
-            }
-        }
-#endif
-        
-        evento_t* e;
-        
+
         //Isto é pra evitar o laço que somente faz relogio++ (compensa!)
         if((bloqueados->tam == 0) && (prontos->tam == 0) && (novos->tam > 0) && (!executando)){
                 tempo_ocioso += novos->data[0]->entrada - relogio;
@@ -186,7 +150,7 @@ int main(int argc, char** argv) {
 
 					// grava o evento no diagrama de Eventos
 					char *tmpdiagrama = (char*)malloc(sizeof(char)*BUFFER_DIAGRAMA_EVT);
-					sprintf(tmpdiagrama, "%" PRIu64 "\t%d\tTERMINO\n", relogio, executando->pid);
+					int tam = sprintf(tmpdiagrama, "%" PRIu64 "\t%d\tTERMINO\n", relogio, executando->pid);
 					if( strlen(diagramaDeEventos) + strlen(tmpdiagrama) + 1 > tamStringDiagrama )
 					{
 						printf("DEBUG: diagramaeventos: %u\n", strlen(diagramaDeEventos));
@@ -195,7 +159,7 @@ int main(int argc, char** argv) {
 						{
 							perror("Erro no realloc!");
 						}
-						tamStringDiagrama += BUFFER_DIAGRAMA_EVT;
+						tamStringDiagrama += BUFFER_DIAGRAMA_EVT + 4096;
 					}
 
 					strcat(diagramaDeEventos, tmpdiagrama);
