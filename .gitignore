@@ -41,3 +41,6 @@ bject files
 *.swp
 .~
 thumbs.db
+*/tags
+*/*/tags
+tags
