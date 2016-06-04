@@ -25,7 +25,7 @@ Log* createLog();
 
 int recordEvent( Log *logger, char *content, LogType logtype );
 
-void getLog( Log *logger, FILE *stream );
+void getLog( Log *logger, char *fname );
 
 void freeLog( Log *logger );
 

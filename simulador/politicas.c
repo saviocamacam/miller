@@ -1,15 +1,20 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include <inttypes.h>
 #include "politicas.h"
 #include "bcp.h"
 #include "bcpList.h"
+#include "logger.h"
 
 extern bcpList_t *bloqueados;
 extern bcpList_t *prontos;
 extern bcp_t* executando;
 extern char *diagramaDeEventos;
 extern uint64_t tamStringDiagrama;
+extern Log *logger;
+extern uint64_t relogio;
 
 #define BUFFER_LINHA 255 
 
@@ -46,6 +51,12 @@ void RR_tick(struct politica_t *p){
         //decrementar o tempo restante deste processo
         executando->timeSlice--;
         if(executando->timeSlice <= 0){
+
+			// grava no log o bloqueio por quantum expirado
+			char *content = malloc(sizeof(char)*BUFFER_LINHA);
+			sprintf(content, "%" PRIu64 "\t%d\tQUANTUM_EX", relogio, executando->pid);
+			recordEvent(logger, content, DIAGRAM_EVT);
+
             //se o tempo do processo acabou, inserir o processo atual na lista de prontos
             LISTA_BCP_inserir(prontos, executando);
             //remover o processo atual de execução

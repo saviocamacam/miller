@@ -18,6 +18,7 @@
 
 // define o intervalo de tempo para calculo da vazao
 #define TEMPO_VAZAO 	1000.0f
+#define BUFFER 256
 #define BUFFER_TERMINO	256
 #define BUFFER_DIAGRAMA_EVT 4096
 #define BUFFER_HEADER 255
@@ -96,6 +97,9 @@ int main(int argc, char** argv) {
         //verificar se algum processo novo chegou neste momento
         if(novos->data[0]->entrada == relogio){
             LISTA_BCP_inserir(prontos, novos->data[0]);
+			char *content = malloc(sizeof(char)*BUFFER);
+			sprintf(content, "%" PRIu64 "\t%d\tCRIACAO", relogio, novos->data[0]->pid);
+			recordEvent(logger, content, DIAGRAM_EVT);
             experimento->politica->novoProcesso(experimento->politica, novos->data[0]);
             LISTA_BCP_remover(novos, novos->data[0]->pid);
         }
@@ -143,7 +147,6 @@ int main(int argc, char** argv) {
                     executando = NULL;
                 }
                 else{
-					//TODO: implementar novos eventos para o diagrama
 
                     //Se não for evento de término, é um evento de bloqueio
                     executando->proxEvento++;
@@ -185,14 +188,20 @@ int main(int argc, char** argv) {
                 //retira da fila de bloqueados
                 LISTA_BCP_remover(bloqueados, bloqueados->data[i]->pid);
                 //Invocar callback de desbloqueio de processo
-                experimento->politica->desbloqueado(experimento->politica, p);
+				experimento->politica->desbloqueado(experimento->politica, p);
+				char *content = malloc(sizeof(char)*BUFFER);
+				sprintf(content, "%" PRIu64 "\t%d\tDESBLOQUEIO", relogio, p->pid);
+				recordEvent(logger, content, DIAGRAM_EVT);
             }
 
         }
 
+		// incrementa o relogio
+        relogio++;
+
         //Se não há processo executando...
         if(!executando){
-            //Invocar o callback de escalonamento para escolher um processo para ocupar a CPU!
+			//Invocar o callback de escalonamento para escolher um processo para ocupar a CPU!
 			if( !LISTA_BCP_vazia(prontos) )
 				executando = experimento->politica->escalonar(experimento->politica);
             if(executando != NULL){
@@ -204,6 +213,11 @@ int main(int argc, char** argv) {
 				// marca esse tempo de execucao como o mais recente
 				executando->tExecRecente = relogio;
 
+				// grava no log a execucao do processo
+				char *content = malloc(sizeof(char)*BUFFER);
+				sprintf(content, "%" PRIu64 "\t%d\tEXEC", relogio, executando->pid);
+				recordEvent(logger, content, DIAGRAM_EVT);
+
                 if(executando->tPrimeiraExec == -1){
                     executando->tPrimeiraExec = relogio+1;
                 }
@@ -214,7 +228,6 @@ int main(int argc, char** argv) {
             }
         }        
 
-        relogio++;
     }
     
 	// calculo do tme, tmr e vazao
@@ -240,7 +253,7 @@ int main(int argc, char** argv) {
 	recordEvent(logger, cabecalho, HEADER);
 
 	// imprime o log de evento
-	getLog(logger, NULL);
+	getLog(logger, experimento->arq_saida );
 
 #ifdef DEBUG
 	printf("DEBUG: Relogio: %" PRIu64 "\n", relogio);

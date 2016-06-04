@@ -39,10 +39,20 @@ int recordEvent( Log *logger, char *content, LogType logtype )
 	return 0;
 }
 
-void getLog( Log *logger, FILE *stream )
+void getLog( Log *logger, char *fname )
 {
-	FILE *target = stdout;
+	FILE *target;
 
+	if(fname == NULL) {
+		target = stdout;
+	} else {
+		target = fopen(fname, "w+");
+		if(target==NULL)
+		{
+			perror("Falha ao criar o arquivo de saida!");
+			exit(1);
+		}
+	}
 	char *content = NULL;
 	size_t nbytes;
 	ssize_t read = 0;
@@ -64,14 +74,23 @@ void getLog( Log *logger, FILE *stream )
 		fprintf(target,"%s", content);
 
 	free(content);
+	fclose(target);
 
 }
 
 void freeLog( Log *logger )
 {
+	fclose(logger->arquivoLog);
 	free(logger->arquivoLog);
+
+	fclose(logger->diagramaEventos);
 	free(logger->diagramaEventos);
+
+	fclose(logger->sequenciaTermino);
 	free(logger->sequenciaTermino);
+
+	fclose(logger->header);
 	free(logger->header);
+
 	free(logger);
 }
