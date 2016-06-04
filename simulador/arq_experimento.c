@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "arq_experimento.h"
 #include "politicas.h"
 #include "erros.h"
@@ -29,6 +30,7 @@ experimento_t* EXPERIMENTO_ler(char* arqExperimento){
  
     novo->arq_saida = malloc(NOME_ARQ_SAIDA_TAM_MAX * sizeof(char));
     fgets(novo->arq_saida, NOME_ARQ_SAIDA_TAM_MAX, arq);    
+    *(strstr(novo->arq_saida, "\n")) = '\0';
     
     novo->politica = POLITICA_criar(arq);
     

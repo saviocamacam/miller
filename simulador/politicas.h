@@ -35,13 +35,18 @@ typedef struct random_t{
     bcpList_t* lista;
 }random_t;
 
+typedef struct sjf_t{
+		bcpList_t *lista;
+}sjf_t;
+
 typedef struct politica_t{
     POLITICA_ESC politica;
     union{
         rr_t* rr;
         fp_t* fp;
-        fcfs_t* fcfs;
+	fcfs_t* fcfs;
 	random_t* random;
+	sjf_t* sjf;
     }param;
     bcp_t* (*escalonar)(struct politica_t*);
     void (*tick)(struct politica_t*);
@@ -80,6 +85,9 @@ static void RANDOM_fimProcesso(struct politica_t *p, bcp_t* processo);
 static bcp_t* RANDOM_escalonar(struct politica_t *p);
 static politica_t* POLITICARANDOM_criar(FILE* arqProcessos);
 
+static void SJF_novoProcesso(struct politica_t *p, bcp_t* novoProcesso);
+static void SJF_fimProcesso(struct politica_t *p, bcp_t* processo);
+static bcp_t* SJF_escalonar(struct politica_t *p);
 static politica_t* POLITICASJF_criar(FILE* arqProcessos);
 #endif	/* POLITICAS_H */
 

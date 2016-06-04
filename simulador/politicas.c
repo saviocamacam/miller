@@ -1,15 +1,20 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include <inttypes.h>
 #include "politicas.h"
 #include "bcp.h"
 #include "bcpList.h"
+#include "logger.h"
 
 extern bcpList_t *bloqueados;
 extern bcpList_t *prontos;
 extern bcp_t* executando;
 extern char *diagramaDeEventos;
 extern uint64_t tamStringDiagrama;
+extern Log *logger;
+extern uint64_t relogio;
 
 #define BUFFER_LINHA 255 
 
@@ -46,6 +51,12 @@ void RR_tick(struct politica_t *p){
         //decrementar o tempo restante deste processo
         executando->timeSlice--;
         if(executando->timeSlice <= 0){
+
+			// grava no log o bloqueio por quantum expirado
+			char *content = malloc(sizeof(char)*BUFFER_LINHA);
+			sprintf(content, "%" PRIu64 "\t%d\tQUANTUM_EX", relogio, executando->pid);
+			recordEvent(logger, content, DIAGRAM_EVT);
+
             //se o tempo do processo acabou, inserir o processo atual na lista de prontos
             LISTA_BCP_inserir(prontos, executando);
             //remover o processo atual de execução
@@ -400,9 +411,76 @@ politica_t* POLITICARANDOM_criar(FILE* arqProcessos){
 /*
  * SJF
  */
+void SJF_novoProcesso(struct politica_t *p, bcp_t* novoProcesso)
+{
+	// variavel que guarda o tempo total do Processo
+	uint64_t tTotalProcesso = 0;
+
+	// calcula o tempo total do processo
+	int i=0;
+	for( ; i < novoProcesso->nEventos; i++ )
+	{
+		if ( novoProcesso->eventos[i]->evento == EVT_BLOQUEIO )
+			tTotalProcesso += novoProcesso->eventos[i]->tempo;
+		else if ( novoProcesso->eventos[i]->evento == EVT_TERMINO )
+			tTotalProcesso += novoProcesso->eventos[i]->tempo;
+	}
+
+	novoProcesso->tTotalProcesso = tTotalProcesso;
+	
+	// insere o processo na lista da politica
+	LISTA_BCP_inserir(p->param.sjf->lista, novoProcesso);
+}
+
+void SJF_fimProcesso(struct politica_t *p, bcp_t* processo)
+{
+	LISTA_BCP_remover(p->param.sjf->lista, processo->pid);
+}
+
+bcp_t* SJF_escalonar(struct politica_t *p)
+{
+	if ( LISTA_BCP_vazia(prontos) )
+		return NULL;
+	int i = 0;
+
+	bcp_t *ret = prontos->data[i++];
+	for ( ; i < prontos->tam; i++ )
+	{
+		bcp_t *aux = prontos->data[i];
+		if ( aux->tTotalProcesso < ret->tTotalProcesso )			
+			ret = aux;
+	}
+
+	return ret;
+}
+
+
 politica_t* POLITICASJF_criar(FILE* arqProcessos)
 {
-	return NULL;
+    politica_t* p;
+    sjf_t* sjf;
+    
+    p = malloc(sizeof(politica_t));
+    
+    p->politica = POL_SJF;
+    
+    //Ligar os callbacks com as rotinas RR
+    p->escalonar = RANDOM_escalonar;
+    p->tick = DUMMY_tick;
+    p->novoProcesso = RANDOM_novoProcesso;
+    p->fimProcesso = RANDOM_fimProcesso;
+    p->desbloqueado = DUMMY_desbloqueado;
+    
+    //Alocar a struct que contém os parâmetros para a política round-robin
+    sjf = malloc(sizeof(sjf_t));
+    
+    //inicializar a estrutura de dados fcfs
+    sjf->lista = LISTA_BCP_criar();
+    
+    //Atualizar a política com os parâmetros do escalonador
+    p->param.sjf = sjf;
+    
+    return p;
 }
 
 /*
@@ -419,35 +497,24 @@ politica_t* POLITICA_criar(FILE* arqProcessos){
     //*(strstr(str, "\n")) = '\0';
     
     politica_t* p;
-    p = malloc(sizeof(politica_t));
-    
+
     if(!strncmp(str, "sjf", 3)){
-        p->param.rr = NULL;
-        p->politica = POL_SJF;
-        p->escalonar = NULL;
-        p->tick = DUMMY_tick;
-        p->novoProcesso = DUMMY_novo;
-        p->fimProcesso = DUMMY_fim;
-        p->desbloqueado = DUMMY_desbloqueado;
+		p = POLITICASJF_criar(arqProcessos);
     }
     
     if(!strncmp(str, "fcfs", 4)){
-		free(p);
         p = POLITICAFCFS_criar(arqProcessos);
     }
     
     if(!strncmp(str, "random",6)){
-		free(p);
         p = POLITICARANDOM_criar(arqProcessos);
     }
     
     if(!strncmp(str, "rr", 2)){
-        free(p);
         p = POLITICARR_criar(arqProcessos);
     }
     
     if(!strncmp(str, "fp", 2)){
-        free(p);
         p = POLITICAFP_criar(arqProcessos);
     }
     
