@@ -14,12 +14,13 @@
 #include "erros.h"
 
 #define DEBUG 
+#undef DEBUG
 
 // define o intervalo de tempo para calculo da vazao
-#define TEMPO_VAZAO 	1000
+#define TEMPO_VAZAO 	1000.0f
 #define BUFFER_TERMINO	256
 #define BUFFER_DIAGRAMA_EVT 4096
-#define BUFFER_HEADER 4096
+#define BUFFER_HEADER 255
 
 //Estrutura contendo informações sobre o experimento
 experimento_t *experimento = NULL;
@@ -40,7 +41,6 @@ long double tme = 0.0;
 long double tmr = 0.0;
 long double vazao = 0.0;
 
-uint64_t contadorMediaVazao = 0;
 uint64_t qtdProcExecutados = 0;
 
 Log *logger;
@@ -214,22 +214,12 @@ int main(int argc, char** argv) {
             }
         }        
 
-		// contabiliza a vazao a cada 1000 unidades de tempo
-		if( relogio && relogio % TEMPO_VAZAO == 0 )
-		{
-			// soma acumulada da quantidade de processos executados
-			vazao += qtdProcExecutados;
-			qtdProcExecutados = 0;
-			contadorMediaVazao++;
-		}
-        
         relogio++;
     }
     
 	// calculo do tme, tmr e vazao
 	tme = tme / processos->nProcessos;
-	tmr = tmr / processos->nProcessos;
-	vazao = vazao / contadorMediaVazao;
+	vazao = qtdProcExecutados /(relogio/TEMPO_VAZAO);
     
 	// escreve os dados do cabecalho;
 	// grava o cabecalho no log
