@@ -40,8 +40,8 @@ typedef struct politica_t{
     union{
         rr_t* rr;
         fp_t* fp;
-		fcfs_t* fcfs;
-		random_t* random;
+        fcfs_t* fcfs;
+	random_t* random;
     }param;
     bcp_t* (*escalonar)(struct politica_t*);
     void (*tick)(struct politica_t*);
