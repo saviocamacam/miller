@@ -4,21 +4,22 @@
 #include <time.h>
 #include <stdint.h>
 #include <inttypes.h>
-#include "erros.h"
 
 
 #include "arq_experimento.h"
 #include "arq_processos.h"
 #include "bcpList.h"
 #include "intList.h"
+#include "logger.h"
+#include "erros.h"
 
 #define DEBUG 
-#undef DEBUG
 
 // define o intervalo de tempo para calculo da vazao
 #define TEMPO_VAZAO 	1000
 #define BUFFER_TERMINO	256
 #define BUFFER_DIAGRAMA_EVT 4096
+#define BUFFER_HEADER 4096
 
 //Estrutura contendo informações sobre o experimento
 experimento_t *experimento = NULL;
@@ -42,11 +43,7 @@ long double vazao = 0.0;
 uint64_t contadorMediaVazao = 0;
 uint64_t qtdProcExecutados = 0;
 
-char *sequenciaTermino = NULL;
-uint64_t tamStringTermino = 0;
-
-char *diagramaDeEventos = NULL;
-uint64_t tamStringDiagrama = 0;
+Log *logger;
 
 int main(int argc, char** argv) {
     
@@ -70,18 +67,13 @@ int main(int argc, char** argv) {
     prontos = LISTA_BCP_criar();
     bloqueados = LISTA_BCP_criar();
     novos = LISTA_BCP_criar();
+
+	logger = createLog();
     
     //Inserir todoos processos do arquivo de processos na lista de novos
     for(i = 0; i < processos->nProcessos; i++){
         LISTA_BCP_inserir(novos, processos->processos[i]);
     }
-
-	// Aloca espaco para o termino dos processos
-	sequenciaTermino = (char*)malloc(sizeof(char)*BUFFER_TERMINO);
-	tamStringTermino = BUFFER_TERMINO;
-
-	diagramaDeEventos = (char*)malloc(sizeof(char)*BUFFER_DIAGRAMA_EVT);
-	tamStringDiagrama = BUFFER_DIAGRAMA_EVT;
     
     relogio = 0;
     
@@ -134,35 +126,14 @@ int main(int argc, char** argv) {
 					// grava o processo terminado
 					char *tmppid = (char*)malloc(sizeof(char)*BUFFER_TERMINO);
 					sprintf( tmppid, "%d ", executando->pid );
-					if( strlen(sequenciaTermino) + strlen(tmppid) + 1 > tamStringTermino )
-					{
-						sequenciaTermino = realloc( sequenciaTermino, (strlen(sequenciaTermino)+BUFFER_TERMINO+1) * sizeof(char) );
-						if( sequenciaTermino == NULL)
-						{
-							perror("Erro no realloc!");
-						}
-						tamStringTermino += BUFFER_TERMINO;
-					}
-
-					strcat(sequenciaTermino, tmppid);
+					recordEvent( logger, tmppid, SEQUENC_TER );
 					free(tmppid);
 					tmppid = NULL;
 
 					// grava o evento no diagrama de Eventos
 					char *tmpdiagrama = (char*)malloc(sizeof(char)*BUFFER_DIAGRAMA_EVT);
-					int tam = sprintf(tmpdiagrama, "%" PRIu64 "\t%d\tTERMINO\n", relogio, executando->pid);
-					if( strlen(diagramaDeEventos) + strlen(tmpdiagrama) + 1 > tamStringDiagrama )
-					{
-						printf("DEBUG: diagramaeventos: %u\n", strlen(diagramaDeEventos));
-						diagramaDeEventos = realloc( diagramaDeEventos, (strlen(diagramaDeEventos)+BUFFER_DIAGRAMA_EVT + 4096) * sizeof(char) );
-						if( diagramaDeEventos == NULL)
-						{
-							perror("Erro no realloc!");
-						}
-						tamStringDiagrama += BUFFER_DIAGRAMA_EVT + 4096;
-					}
-
-					strcat(diagramaDeEventos, tmpdiagrama);
+					sprintf(tmpdiagrama, "%" PRIu64 "\t%d\tTERMINO", relogio, executando->pid);
+					recordEvent( logger, tmpdiagrama, DIAGRAM_EVT );
 					free(tmpdiagrama);
                     
                     //Destruir o BCP do processo.
@@ -187,18 +158,8 @@ int main(int argc, char** argv) {
 
 					// grava o evento no diagrama de Eventos
 					char *tmpdiagrama = (char*)malloc(sizeof(char)*BUFFER_DIAGRAMA_EVT);
-					sprintf(tmpdiagrama, "%" PRIu64 "\t%d\tBLOQUEIO\n", relogio, executando->pid);
-					if( strlen(diagramaDeEventos) + strlen(tmpdiagrama) + 1 > tamStringDiagrama )
-					{
-						diagramaDeEventos = realloc( diagramaDeEventos, (strlen(diagramaDeEventos)+BUFFER_DIAGRAMA_EVT + 4096) * sizeof(char) );
-						if( diagramaDeEventos == NULL)
-						{
-							perror("Erro no realloc!");
-						}
-						tamStringDiagrama += BUFFER_DIAGRAMA_EVT;
-					}
-
-					strcat(diagramaDeEventos, tmpdiagrama);
+					sprintf(tmpdiagrama, "%" PRIu64 "\t%d\tBLOQUEIO", relogio, executando->pid);
+					recordEvent( logger, tmpdiagrama, DIAGRAM_EVT );
 					free(tmpdiagrama);
 
                     //retirar processo de execução
@@ -243,9 +204,6 @@ int main(int argc, char** argv) {
 				// marca esse tempo de execucao como o mais recente
 				executando->tExecRecente = relogio;
 
-				//DEBUG
-				/*printf("DEBUG: tme: \t%llf\t\t relogio: \t%" PRIu64 "\n", tme, relogio);*/
-                
                 if(executando->tPrimeiraExec == -1){
                     executando->tPrimeiraExec = relogio+1;
                 }
@@ -268,27 +226,39 @@ int main(int argc, char** argv) {
         relogio++;
     }
     
-    //Calcular TME! (ver definição nos slides!)
+	// calculo do tme, tmr e vazao
 	tme = tme / processos->nProcessos;
 	tmr = tmr / processos->nProcessos;
 	vazao = vazao / contadorMediaVazao;
     
-    printf("Chaveamentos: %" PRIu64 "\n", trocas_de_contexto);
-    printf("TME: %Lf\n", tme);
-    printf("TMR: %Lf\n", tmr);
-    printf("Vazao: %Lf\n", vazao);
-    printf("Termino: %s\n", sequenciaTermino);
-    printf("Tempo ocioso: %" PRIu64 "\n", tempo_ocioso);
-	printf("Diagrama de Eventos\n");
-	printf("%s",diagramaDeEventos);
+	// escreve os dados do cabecalho;
+	// grava o cabecalho no log
+	char *cabecalho = malloc(BUFFER_HEADER * sizeof(char));
+    sprintf(cabecalho, "Chaveamentos: %" PRIu64, trocas_de_contexto);
+	recordEvent(logger, cabecalho, HEADER);
+
+    sprintf(cabecalho, "TME: %Lf", tme);
+	recordEvent(logger, cabecalho, HEADER);
+
+    sprintf(cabecalho, "TMR: %Lf", tmr);
+	recordEvent(logger, cabecalho, HEADER);
+
+    sprintf(cabecalho, "Vazao: %Lf", vazao);
+	recordEvent(logger, cabecalho, HEADER);
+
+    sprintf(cabecalho, "Tempo ocioso: %" PRIu64, tempo_ocioso);
+	recordEvent(logger, cabecalho, HEADER);
+
+	// imprime o log de evento
+	getLog(logger, NULL);
 
 #ifdef DEBUG
 	printf("DEBUG: Relogio: %" PRIu64 "\n", relogio);
 #endif
     
 	// libera a memoria da string de termino dos processos
-	free(sequenciaTermino);
-	free(diagramaDeEventos);
+	free(cabecalho);
+	free(logger);
 
     return (EXIT_SUCCESS);
 }
