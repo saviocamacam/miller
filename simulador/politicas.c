@@ -248,20 +248,22 @@ politica_t* POLITICAFP_criar(FILE* arqProcessos){
 		} 
 		else if(!strncmp(linha, "rr", 2))
 		{
+            // cria arquivo temporario para o param do RR
 			FILE *tmpfp = tmpfile(); 
 			if( tmpfp == NULL )
 			{
 				perror("Erro na abertura do arquivo!");
 				exit(1);
 			}
+            // pega o numero entre ( )
 			char *param = strtok((linha+3), ")");
 
 			fprintf(tmpfp, "%s\n", param);
 			rewind(tmpfp);
 
+            // cria a politica RR com o arquivo temporario
 			*(fp->filas+fp->tam++) = POLITICARR_criar(tmpfp);
 
-			//FIXME: bug com o close
 			if(fclose(tmpfp))
 			{
 				perror("Erro no fechamento do arquivo!");
@@ -272,7 +274,6 @@ politica_t* POLITICAFP_criar(FILE* arqProcessos){
 
 	}
 
-	//FIXME: bug com o free;
 	free(linha);
 	linha = NULL;
 
