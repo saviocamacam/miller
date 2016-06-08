@@ -465,10 +465,10 @@ politica_t* POLITICASJF_criar(FILE* arqProcessos)
     p->politica = POL_SJF;
     
     //Ligar os callbacks com as rotinas RR
-    p->escalonar = RANDOM_escalonar;
+    p->escalonar = SJF_escalonar;
     p->tick = DUMMY_tick;
-    p->novoProcesso = RANDOM_novoProcesso;
-    p->fimProcesso = RANDOM_fimProcesso;
+    p->novoProcesso = SJF_novoProcesso;
+    p->fimProcesso = SJF_fimProcesso;
     p->desbloqueado = DUMMY_desbloqueado;
     
     //Alocar a struct que contém os parâmetros para a política round-robin
