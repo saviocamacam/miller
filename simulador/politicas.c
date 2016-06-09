@@ -412,6 +412,7 @@ politica_t* POLITICARANDOM_criar(FILE* arqProcessos){
 /*
  * SJF
  */
+
 void SJF_novoProcesso(struct politica_t *p, bcp_t* novoProcesso)
 {
 	// variavel que guarda o tempo total do Processo
@@ -442,19 +443,32 @@ bcp_t* SJF_escalonar(struct politica_t *p)
 {
 	if ( LISTA_BCP_vazia(prontos) )
 		return NULL;
-	int i = 0;
 
+	int i = 0;
 	bcp_t *ret = prontos->data[i++];
+	bcp_t *aux;
 	for ( ; i < prontos->tam; i++ )
 	{
-		bcp_t *aux = prontos->data[i];
-		if ( aux->tTotalProcesso < ret->tTotalProcesso )			
+		aux = prontos->data[i];
+		if ( aux->tTotalProcesso < ret->tTotalProcesso )
+		{
 			ret = aux;
+			aux = NULL;
+		}
 	}
+
+	LISTA_BCP_remover(prontos, ret->pid);
 
 	return ret;
 }
 
+void SJF_tick(struct politica_t *p)
+{
+    if(executando){
+        //decrementar o tempo restante deste processo
+        executando->tTotalProcesso--;
+    }
+}
 
 politica_t* POLITICASJF_criar(FILE* arqProcessos)
 {
@@ -467,7 +481,7 @@ politica_t* POLITICASJF_criar(FILE* arqProcessos)
     
     //Ligar os callbacks com as rotinas RR
     p->escalonar = SJF_escalonar;
-    p->tick = DUMMY_tick;
+    p->tick = SJF_tick;
     p->novoProcesso = SJF_novoProcesso;
     p->fimProcesso = SJF_fimProcesso;
     p->desbloqueado = DUMMY_desbloqueado;
